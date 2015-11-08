@@ -82,13 +82,16 @@ void can_send(CanMessage *canMessage) {
     // this also sets EXIDEN bit to 0 to only accept standard IDs (no extended ones)
     TXB0SIDL = (canID & 0b111) << 5;
 
-    // TXB0DLC - last 4 bits should contain data length - equal to 3 now (1 byte is enough for the 1 bit only so far + few more byte more for error counts)
-    TXB0DLC = 3;
+    // TXB0DLC - last 4 bits should contain data length - equal to 3 for heartbeat and 1 for normal messages
+    // (1 byte is enough for the 1 bit only so far + few more byte more for error counts)
+    TXB0DLC = canMessage->header->messageType == HEARTBEAT ? 3 : 1;
 
     // now populate TXB0DX data registers
     TXB0D0 = canMessage->isSwitchOn << 7; // 1st bit of the 1st byte only
-    TXB0D1 = TXERRCNT; // whole 2nd byte = CAN transmit error count read from the register
-    TXB0D2 = RXERRCNT; // whole 3nd byte = CAN receive error count read from the register
+    if (canMessage->header->messageType == HEARTBEAT) {
+        TXB0D1 = TXERRCNT; // whole 2nd byte = CAN transmit error count read from the register
+        TXB0D2 = RXERRCNT; // whole 3nd byte = CAN receive error count read from the register
+    }
     
     // request transmitting the message (setting the special bit)
     TXB0CONbits.TXREQ = 1; 
