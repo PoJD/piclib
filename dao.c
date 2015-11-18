@@ -85,23 +85,28 @@ boolean dao_isValid (DataItem *dataItem) {
 }
 
 
-DataItem dao_saveDataItem (unsigned int data) {
+DataItem dao_saveData (unsigned int data) {
     DataItem dataItem = dao_parseData(data);
+    dao_saveDataItem(&dataItem);
+    return dataItem; // return a copy of the instance, not a reference to this local instance
+}
+
+void dao_saveDataItem (DataItem *dataItem) {
     // always disable interrupts during EEPROM write
     di();
     
-    dao_setupEeprom(dataItem.dataType);
+    dao_setupEeprom(dataItem->dataType);
 
     // now enable write to EEPROM
     EECON1bits.WREN = 1;
     
     // first write 8 higher bits of the value
-    EEDATA = dataItem.value >> 8;
+    EEDATA = dataItem->value >> 8;
     dao_writeByte();
     
     // now lower 8 bits of the value
     EEADR ++;
-    EEDATA = MAX_8_BITS & dataItem.value;
+    EEDATA = MAX_8_BITS & dataItem->value;
     dao_writeByte();
 
     // now disable write to EEPROM
@@ -109,8 +114,6 @@ DataItem dao_saveDataItem (unsigned int data) {
     
     // now enable interrupts again
     ei();
-
-    return dataItem; // return a copy of the instance, not a reference to this local instance
 }
 
 DataItem dao_loadDataItem(DataType dataType) {

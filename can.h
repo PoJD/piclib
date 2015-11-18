@@ -78,14 +78,22 @@ void can_setMode(Mode mode, boolean waitForSwitch);
  */
 void can_setupBaudRate(int baudRate, int cpuSpeed);
 
- /**
-  * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
-  * a single mask only checking all bits to be equal.
-  * 
-  * @param header wrapper for the CanHeader - the filter will be setup to match the relevant can messages only
-  */
+/**
+ * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
+ * a single mask only checking all bits to be equal.
+ * 
+ * @param header wrapper for the CanHeader - the filter will be setup to match the relevant can messages only
+ */
 void can_setupStrictReceiveFilter(CanHeader *header);
  
+/**
+ * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
+ * a single mask only checking only 1st bit of the nodeID and all bits of the message type to match
+ * 
+ * @param header wrapper for the CanHeader - the filter will be setup to match the relevant can messages only (using just the first bit from the nodeID)
+ */
+void can_setupFirstBitIdReceiveFilter(CanHeader *header);
+
 /**
  * Attempts to send the message using TXB0 register (not using any others right now)
  * 

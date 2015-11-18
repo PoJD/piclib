@@ -31,6 +31,9 @@ void can_setMode(Mode mode, boolean waitForSwitch) {
 }
 
 void can_setupBaudRate(int baudRate, int cpuSpeed) {
+    // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
+    TRISBbits.TRISB3 = 1;
+
     // SJW to be 1
     // will use 1 TQ for SYNC, 4 for PROP SEG, 8 for phase 1 and 3 for phase 2 = 16TQ (recommendation in datasheeet to place sample point at 80% of bit time)
     // TBIT = 1000 / BAUD_RATE = 16TQ => TQ = 1000 / (BAUD_RATE)
@@ -58,12 +61,20 @@ void can_setupStrictReceiveFilter(CanHeader *header) {
     
     // now setup the strict mask -- all high 11 bits are the canID, rest is EXIDEN bits and others unused in legacy mode
     RXM0SIDH = 0b11111111;
-    // first 3 bits finish the canID, the 5th bit sset EXIDEN to 1 - use the same value of EXIDEN as in the corresponding filter
+    // first 3 bits finish the canID, the 5th bit set EXIDEN to 1 - use the same value of EXIDEN as in the corresponding filter
     RXM0SIDL = 0b11101000;
     
     // ignore buffer overflows here - we really only want to receive this 1 strict message, which is unlikely to happen often
     // now enable the interrupts to receive CAN messages in buffer 0
     PIE5bits.RXB0IE = 1;
+}
+
+void can_setupFirstBitIdReceiveFilter(CanHeader *header) {
+    can_setupStrictReceiveFilter(header);
+    
+    // the only difference is the mask - only mask first 4 bits of the canID (3 for message type and 1 for the first bit from nodeID)
+    RXM0SIDH = 0b11100000;
+    RXM0SIDL = 0b00001000;
 }
 
 void can_send(CanMessage *canMessage) {

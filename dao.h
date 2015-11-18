@@ -29,7 +29,9 @@ typedef enum {
     /** should the switch be suppressed? (i.e. no CAN message should be sent when this is true?) */
     SUPPRESS_SWITCH = 1,
     /** hearbeat timeout in seconds */
-    HEARTBEAT_TIMEOUT = 2
+    HEARTBEAT_TIMEOUT = 2,
+    /** floor of this node - only used in CanRelay project - stored also at the same location as NODE_ID for regular nodes */
+    FLOOR = 0
 } DataType;
 
 /**
@@ -48,11 +50,17 @@ typedef struct {
 boolean dao_isValid (DataItem *dataItem);
 
 /**
- * Save data item into the storage.
- * @param data data to store - 16 bits of data received and to be interpreted as Data structure
+ * Save data into the storage.
+ * @param data data to store - 16 bits of data received and to be interpreted as Data item structure
  * @return the parsed Data instance representing the data
  */
-DataItem dao_saveDataItem (unsigned int data);
+DataItem dao_saveData (unsigned int data);
+
+/**
+ * Save data item into the storage.
+ * @param dataItem data item to store
+ */
+void dao_saveDataItem (DataItem *dataItem);
 
 /**
  * Loads data item from storage for the given dataType
