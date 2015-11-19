@@ -47,20 +47,20 @@ typedef struct {
  * @param dataItem data item to check
  * @return true if valid, false otherwise
  */
-boolean dao_isValid (DataItem *dataItem);
+boolean dao_isValid (volatile DataItem *dataItem);
 
 /**
  * Save data into the storage.
  * @param data data to store - 16 bits of data received and to be interpreted as Data item structure
  * @return the parsed Data instance representing the data
  */
-DataItem dao_saveData (unsigned int data);
+DataItem dao_saveData (volatile unsigned int data);
 
 /**
  * Save data item into the storage.
  * @param dataItem data item to store
  */
-void dao_saveDataItem (DataItem *dataItem);
+void dao_saveDataItem (volatile DataItem *dataItem);
 
 /**
  * Loads data item from storage for the given dataType
@@ -68,7 +68,7 @@ void dao_saveDataItem (DataItem *dataItem);
  * @param dataType dataType to retrieve data item for
  * @return new data item
  */
-DataItem dao_loadDataItem(DataType dataType);
+DataItem dao_loadDataItem(volatile DataType dataType);
 
 #ifdef	__cplusplus
 }

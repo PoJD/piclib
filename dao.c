@@ -5,12 +5,6 @@
  * Internal methods
  */
 
-/**
- * Performs a 1 cycle operation (no operation).
- */
-void noop() {
-    asm("NOP");
-}
 
 /**
  * Parse the given 16 bit integer into the instance of dataItem
@@ -18,7 +12,7 @@ void noop() {
  * @param data 16bit integer to parse
  * @return Data instance
  */
-DataItem dao_parseData(unsigned int data) {
+DataItem dao_parseData(volatile unsigned int data) {
     // first 2 bits = dataType, the other 14 bits = data itself
     DataType dataType = data >> 14;
     unsigned int intData = MAX_14_BITS & data; // take 14 lowest bits only
@@ -34,7 +28,7 @@ DataItem dao_parseData(unsigned int data) {
  * 
  * @param dataType dataType to setup the address for
  */
-void dao_setupEeprom(DataType dataType) {
+void dao_setupEeprom(volatile DataType dataType) {
     // write to EEPROM, write only, rest are flags cleared by us this way
     EECON1 = 0;
     
@@ -64,7 +58,7 @@ void dao_writeByte() {
  */
 byte dao_readByte() {
     EECON1bits.RD = 1; // request read bit
-    noop(); // wait 1 cycle
+    NOP(); // wait 1 cycle
     return EEDATA; // and now read the data
 }
 
@@ -72,7 +66,7 @@ byte dao_readByte() {
  * Public API
  */
 
-boolean dao_isValid (DataItem *dataItem) {
+boolean dao_isValid (volatile DataItem *dataItem) {
     if (dataItem->value == INVALID_VALUE) {
         return FALSE;
     }
@@ -85,13 +79,13 @@ boolean dao_isValid (DataItem *dataItem) {
 }
 
 
-DataItem dao_saveData (unsigned int data) {
+DataItem dao_saveData (volatile unsigned int data) {
     DataItem dataItem = dao_parseData(data);
     dao_saveDataItem(&dataItem);
     return dataItem; // return a copy of the instance, not a reference to this local instance
 }
 
-void dao_saveDataItem (DataItem *dataItem) {
+void dao_saveDataItem (volatile DataItem *dataItem) {
     // always disable interrupts during EEPROM write
     di();
     
@@ -116,7 +110,7 @@ void dao_saveDataItem (DataItem *dataItem) {
     ei();
 }
 
-DataItem dao_loadDataItem(DataType dataType) {
+DataItem dao_loadDataItem(volatile DataType dataType) {
     DataItem result;
     result.dataType = dataType;
     
@@ -126,7 +120,7 @@ DataItem dao_loadDataItem(DataType dataType) {
     dao_setupEeprom(dataType);
     
     // now read high 8 bits of data (first two should always be 0 though since we only could store 14bits of data)
-    result.value = dao_readByte() << 8;
+    result.value = (0b111111 & dao_readByte()) << 8;
     
     // now move the address and initiate another read to get the 8 lower bits
     EEADR ++;
