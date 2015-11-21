@@ -24,10 +24,10 @@ int translateCanHeader(CanHeader *header) {
  * Public API here
  */
 
-void can_setMode(Mode mode, boolean waitForSwitch) {
+void can_setMode(Mode mode) {
     CANCONbits.REQOP = mode;
-    // if wait was required, then wait until we are in configuration mode (it may take a few cycles according to datasheet)
-    while (waitForSwitch && CANSTATbits.OPMODE != mode);    
+    // wait until we are in required mode (it may take a few cycles according to datasheet)
+    while (CANSTATbits.OPMODE != mode);    
 }
 
 void can_setupBaudRate(int baudRate, int cpuSpeed) {
@@ -36,7 +36,7 @@ void can_setupBaudRate(int baudRate, int cpuSpeed) {
 
     // SJW to be 1
     // will use 1 TQ for SYNC, 4 for PROP SEG, 8 for phase 1 and 3 for phase 2 = 16TQ (recommendation in datasheeet to place sample point at 80% of bit time)
-    // TBIT = 1000 / BAUD_RATE = 16TQ => TQ = 1000 / (BAUD_RATE)
+    // TBIT = 1000 / BAUD_RATE = 16TQ => TQ = 1000 / 16*(BAUD_RATE)
     // TQ (micros) = (2 * (BRP + 1))/CPU_SPEED (MHz) => BRP = (1000*CPU_SPEED)/(32*BAUD_RATE) -1, BRP = 9 = 0b1001 (for our speed and setting)
 
     // BRGCON1 = first 2 bits as 0 = SJW 1, last 6 bits are BRP, so mask first two bits of BRP (to make SJW 00)

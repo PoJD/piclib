@@ -66,9 +66,8 @@ typedef struct {
  * Sets operational mode of CAN chip
  * 
  * @param mode mode to set
- * @param waitForSwitch whether a wait should be performed to assert the move to that mode
  */
-void can_setMode(Mode mode, boolean waitForSwitch);
+void can_setMode(Mode mode);
 
 /**
  * Sets up baud rate of CAN chip
