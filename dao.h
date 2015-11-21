@@ -30,8 +30,8 @@ typedef enum {
     SUPPRESS_SWITCH = 1,
     /** hearbeat timeout in seconds */
     HEARTBEAT_TIMEOUT = 2,
-    /** floor of this node - only used in CanRelay project - stored also at the same location as NODE_ID for regular nodes */
-    FLOOR = 0
+    /** floor of this node - only used in CanRelay project */
+    FLOOR = 3
 } DataType;
 
 /**
