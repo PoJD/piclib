@@ -62,12 +62,18 @@ typedef struct {
     NORMAL_MODE   = 0b000
 } Mode;
 
+
+/**
+ * Sets up basic can settings (ports to starts with)
+ */
+void can_init();
+
 /**
  * Sets operational mode of CAN chip
  * 
  * @param mode mode to set
  */
-void can_setMode(Mode mode);
+void can_setMode(volatile Mode mode);
 
 /**
  * Sets up baud rate of CAN chip
@@ -75,7 +81,7 @@ void can_setMode(Mode mode);
  * @param baudRate the baud rate to use (in kbits per seond). Max is 500 (the implementation uses 16TQ for the bit sequencing)
  * @param cpuSpeed speed of the clock in MHz (mind that PLL settings in registers may affect this)
  */
-void can_setupBaudRate(int baudRate, int cpuSpeed);
+void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed);
 
 /**
  * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup

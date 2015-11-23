@@ -24,16 +24,22 @@ int translateCanHeader(CanHeader *header) {
  * Public API here
  */
 
-void can_setMode(Mode mode) {
+void can_init() {
+    // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
+    TRISBbits.TRISB3 = 1;
+}
+
+void can_setMode(volatile Mode mode) {
+    // always first start with aborting any pending transmission (we may be trying that before)
+    CANCONbits.ABAT = 1;
+    while (CANCONbits.ABAT); // hardware should clear this flag when all is aborted
+    
     CANCONbits.REQOP = mode;
     // wait until we are in required mode (it may take a few cycles according to datasheet)
     while (CANSTATbits.OPMODE != mode);    
 }
 
-void can_setupBaudRate(int baudRate, int cpuSpeed) {
-    // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
-    TRISBbits.TRISB3 = 1;
-
+void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed) {
     // SJW to be 1
     // will use 1 TQ for SYNC, 4 for PROP SEG, 8 for phase 1 and 3 for phase 2 = 16TQ (recommendation in datasheeet to place sample point at 80% of bit time)
     // TBIT = 1000 / BAUD_RATE = 16TQ => TQ = 1000 / 16*(BAUD_RATE)
