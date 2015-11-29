@@ -27,6 +27,11 @@ int translateCanHeader(CanHeader *header) {
 void can_init() {
     // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
     TRISBbits.TRISB3 = 1;
+    
+    // also set the Enable Drive High bit, that should help with the stability
+    CIOCONbits.ENDRHI = 1;
+    
+    messageStatus.statusCode = NOTHING_SENT;
 }
 
 void can_setMode(volatile Mode mode) {
@@ -84,11 +89,13 @@ void can_setupFirstBitIdReceiveFilter(CanHeader *header) {
 }
 
 void can_send(CanMessage *canMessage) {
+    messageStatus.statusCode = SENDING;
+    
     // first check the register is not in error (previous send failed) - if so, then clear the flag and start sending this message
     // the error sent counter will be increased, so we can read this information later anyway
     if (TXB0CONbits.TXERR) {
-        TXB0CONbits.TXERR = 0;
-        TXB0CONbits.TXREQ = 0; // this will make the register RW again (and will pass the below loop as a result)
+        // abort any pending transmissions now, it should clear the below flag as a result too
+        CANCONbits.ABAT = 1;
     }
     // confirm nothing is in the transmit register yet (previous can message sent)    
     while (TXB0CONbits.TXREQ);

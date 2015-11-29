@@ -62,6 +62,27 @@ typedef struct {
     NORMAL_MODE   = 0b000
 } Mode;
 
+/**
+ * Code of result of sending a CAN message
+ */
+typedef enum {
+    OK           = 0, 
+    ERROR        = 1,
+    SENDING      = 2,
+    NOTHING_SENT = 3
+} MessageStatusCode;
+
+/**
+ * MessageStatus holds time and status of the last CAN send
+ */
+typedef struct {
+     MessageStatusCode statusCode;
+     int timestamp; // timestamp in whatever unit the target application wishes to use
+ } MessageStatus;
+ 
+/** was a CAN message send? The can util will update only the SENDING status when a can send is requested, 
+ *  but the application code is required to keep it updated after a message is sent (both timestamp and status) */
+MessageStatus messageStatus;
 
 /**
  * Sets up basic can settings (ports to starts with)
