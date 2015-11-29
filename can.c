@@ -91,14 +91,14 @@ void can_setupFirstBitIdReceiveFilter(CanHeader *header) {
 void can_send(CanMessage *canMessage) {
     messageStatus.statusCode = SENDING;
     
-    // first check the register is not in error (previous send failed) - if so, then clear the flag and start sending this message
-    // the error sent counter will be increased, so we can read this information later anyway
-    if (TXB0CONbits.TXERR) {
-        // abort any pending transmissions now, it should clear the below flag as a result too
-        CANCONbits.ABAT = 1;
-    }
     // confirm nothing is in the transmit register yet (previous can message sent)    
-    while (TXB0CONbits.TXREQ);
+    while (TXB0CONbits.TXREQ) {
+        // check the register is not in error (previous send failed)
+        if (TXB0CONbits.TXERR) {
+            // abort any pending transmissions now, it should clear the below flag as a result too
+            CANCONbits.ABAT = 1;
+        }
+    }
     
     int canID = translateCanHeader(canMessage->header);
     TXB0SIDH = (canID >> 3) & MAX_8_BITS; // take highest 8 bits as a byte
