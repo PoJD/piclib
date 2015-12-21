@@ -32,6 +32,9 @@ void can_init() {
     CIOCONbits.ENDRHI = 1;
     
     messageStatus.statusCode = NOTHING_SENT;
+    
+    // when initiating again, reset this flag
+    filterSetup = FALSE;
 }
 
 void can_setMode(volatile Mode mode) {
@@ -63,12 +66,27 @@ void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed) {
 void can_setupStrictReceiveFilter(CanHeader *header) {
     // setup just 1 acceptance filter to only accept CAN message for the in passed header information
     int canID = translateCanHeader(header);
-    RXF0SIDH = canID >> 3; // take highest 8 bits as a byte
+    
+    // take highest 8 bits as a byte;
+    byte high = canID >> 3;
     // take 3 bits only and set as high bits inside low byte register 
     // this also sets EXIDEN bit to 0 to only accept standard IDs (no extended ones)
-    RXF0SIDL = (canID & 0b111) << 5;
-    // now enable only this filter
-    RXFCON0bits.RXF0EN = 1;
+    byte low = (canID & 0b111) << 5;
+    
+    // now either set first or second acceptance filter (based on whether this method was already called or not)
+    // in addition to setting it up, also enable it through the RXFCON0bits bits
+    if (!filterSetup) {
+        RXF0SIDH = high;
+        RXF0SIDL = low;
+        RXFCON0bits.RXF0EN = 1;
+    } else {
+        RXF1SIDH = high;
+        RXF1SIDL = low;        
+        RXFCON0bits.RXF1EN = 1;
+    }
+    
+    // remember to use the second filter next time
+    filterSetup = TRUE;
     
     // now setup the strict mask -- all high 11 bits are the canID, rest is EXIDEN bits and others unused in legacy mode
     RXM0SIDH = 0b11111111;
