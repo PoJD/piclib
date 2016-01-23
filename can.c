@@ -99,7 +99,7 @@ void can_setupFirstBitIdReceiveFilter(CanHeader *header) {
     can_setupStrictReceiveFilter(header);
     
     // the only difference is the mask - only mask first 4 bits of the canID (3 for message type and 1 for the first bit from nodeID)
-    RXM0SIDH = 0b11100000;
+    RXM0SIDH = 0b11110000;
     RXM0SIDL = 0b00001000;
 }
 
