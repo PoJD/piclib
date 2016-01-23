@@ -21,10 +21,11 @@ extern "C" {
  * Type of CanMessage
  */
 typedef enum {
-    NORMAL    = 0b000, // normal message is a message sent by the node to reveal some action performed
-    HEARTBEAT = 0b001, // hearbeat message is also sent by this node, but only triggered by a timer
-    CONFIG    = 0b010, // config would typically be sent by some master node in the network to setup this node (so this node would receive this message instead)
-    COMPLEX   = 0b011  // complex message is allowing more complex commands to be transmitted (sort of extension of NORMAL))
+    NORMAL        = 0, // normal message is a message sent by the node to reveal some action performed
+    HEARTBEAT     = 1, // hearbeat message is also sent by this node, but only triggered by a timer
+    CONFIG        = 2, // config would typically be sent by some master node in the network to setup this node (so this node would receive this message instead)
+    COMPLEX       = 3, // complex message is allowing more complex commands to be transmitted (sort of extension of NORMAL))
+    COMPLEX_REPLY = 4  // reply to a complex message
 } MessageType;
     
 /**
@@ -48,12 +49,8 @@ typedef struct {
       * The below will become part of the data payload sent as part of this CAN message (custom protocol)
       */
      
-     /**
-      * Boolean determining whether the switch is on or off. The semantics of this are up to the switch (e.g. on always in the case of lights,
-      * while on/off in the case of reed switch)
-      * By default the switch is on, e.g. heartbeat message will find out on its own though
-      */
-     boolean isSwitchOn;
+     int dataLength;
+     byte data[8]; // probably never used the whole size
  } CanMessage;
 
 /** Modes of the controller - see datasheet */ 
@@ -84,6 +81,26 @@ typedef struct {
 /** was a CAN message send? The can util will update only the SENDING status when a can send is requested, 
  *  but the application code is required to keep it updated after a message is sent (both timestamp and status) */
 MessageStatus messageStatus;
+
+
+/**
+ * Use the can header to setup the register for can ID (only low 11 bits should be set)
+ * This would set the high and low registers as per the arguments
+ * 
+ * @param header can header to translate
+ * @param high reference to the high 8 bits of the CAN ID
+ * @param low reference to the low 8 bits of the CAN ID (just highest 3 bits would be used there)
+ */
+void can_headerToId(CanHeader *header, volatile byte *high, volatile byte *low);
+
+/**
+ * Read the respective can ID registers and translate that into can header
+ * 
+ * @param high reference to the high 8 bits of the CAN ID to read
+ * @param low reference to the low 8 bits of the CAN ID to read (just highest 3 bits would be used there)
+ * @return header translated can header
+ */
+CanHeader can_idToHeader(volatile byte *high, volatile byte *low);
 
 /**
  * Sets up basic can settings (ports to starts with)

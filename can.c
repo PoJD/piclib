@@ -4,25 +4,32 @@
 #include "can.h"
 
 /*
- * Internal methods here
+ * Public API here
  */
 
-/**
- * Translate the can header to an integer (only low 11 bits should be set)
- * 
- * @param header can header to translate
- * @return canID (11 bit integer)
- */
-int translateCanHeader(CanHeader *header) {
+void can_headerToId(CanHeader *header, volatile byte *high, volatile byte *low) {
     // high byte is set to equal to message type - should be 3 bits only, so highest 5 bits will be 0 anyway
     // low byte = the node ID directly
     // high bits are set to message type on purpose to ease filtering - make sure the highest bits are filtered easily
-    return (header->messageType << 8) + header->nodeID;
+    int canID = (header->messageType << 8) + header->nodeID;
+
+    *high = (canID >> 3) & MAX_8_BITS; // take highest 8 bits as a byte
+    // take 3 bits only and set as high bits inside low byte register 
+    // this also sets EXIDEN bit to 0 to only accept standard IDs (no extended ones)
+    *low = (canID & 0b111) << 5;
 }
 
-/*
- * Public API here
- */
+CanHeader can_idToHeader(volatile byte *high, volatile byte *low) {
+    // shift hight byte to get the upper 8 bits, add the low byte and then shift it all to right
+    // since we only have 11 bits of CAN ID in there (just highest 3 bits of low ID are the lowest 3 bits)
+    int canID = ( (*high << 8) + *low ) >> 5;
+    
+    CanHeader header;
+    header.messageType = canID >> 8; //high 8 bits is message type (should contain just 3 bits really)
+    header.nodeID = canID & MAX_8_BITS; // low 8 bits is the node ID
+    
+    return header; // return by copy, not reference to a local variable
+}
 
 void can_init() {
     // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
@@ -65,23 +72,13 @@ void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed) {
 
 void can_setupStrictReceiveFilter(CanHeader *header) {
     // setup just 1 acceptance filter to only accept CAN message for the in passed header information
-    int canID = translateCanHeader(header);
-    
-    // take highest 8 bits as a byte;
-    byte high = canID >> 3;
-    // take 3 bits only and set as high bits inside low byte register 
-    // this also sets EXIDEN bit to 0 to only accept standard IDs (no extended ones)
-    byte low = (canID & 0b111) << 5;
-    
-    // now either set first or second acceptance filter (based on whether this method was already called or not)
+    // so either set first or second acceptance filter (based on whether this method was already called or not)
     // in addition to setting it up, also enable it through the RXFCON0bits bits
     if (!filterSetup) {
-        RXF0SIDH = high;
-        RXF0SIDL = low;
+        can_headerToId(header, &RXF0SIDH, &RXF0SIDL);
         RXFCON0bits.RXF0EN = 1;
     } else {
-        RXF1SIDH = high;
-        RXF1SIDL = low;        
+        can_headerToId(header, &RXF1SIDH, &RXF1SIDL);
         RXFCON0bits.RXF1EN = 1;
     }
     
@@ -118,21 +115,16 @@ void can_send(CanMessage *canMessage) {
         }
     }
     
-    int canID = translateCanHeader(canMessage->header);
-    TXB0SIDH = (canID >> 3) & MAX_8_BITS; // take highest 8 bits as a byte
-    // take 3 bits only and set as high bits inside low byte register 
-    // this also sets EXIDEN bit to 0 to only accept standard IDs (no extended ones)
-    TXB0SIDL = (canID & 0b111) << 5;
+    // set up can ID appropriately
+    can_headerToId(canMessage->header, &TXB0SIDH, &TXB0SIDL);
 
-    // TXB0DLC - last 4 bits should contain data length - equal to 3 for heartbeat and 1 for normal messages
-    // (1 byte is enough for the 1 bit only so far + few more byte more for error counts)
-    TXB0DLC = canMessage->header->messageType == HEARTBEAT ? 3 : 1;
-
-    // now populate TXB0DX data registers
-    TXB0D0 = canMessage->isSwitchOn << 7; // 1st bit of the 1st byte only
-    if (canMessage->header->messageType == HEARTBEAT) {
-        TXB0D1 = TXERRCNT; // whole 2nd byte = CAN transmit error count read from the register
-        TXB0D2 = RXERRCNT; // whole 3nd byte = CAN receive error count read from the register
+    // now take data length and all data too
+    TXB0DLC = canMessage->dataLength;
+    
+    volatile byte* data = &TXB0D0;
+    int i;
+    for (i=0; i<canMessage->dataLength; i++, data++) {
+        *data = canMessage->data[i];
     }
     
     // request transmitting the message (setting the special bit)

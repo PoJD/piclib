@@ -19,7 +19,8 @@ typedef unsigned char boolean;
 typedef unsigned char byte;
 
 #define MAX_14_BITS 0x3FFF
-#define MAX_8_BITS 0xFF
+#define MAX_8_BITS 0b11111111
+#define MAX_7_BITS 0b1111111
 
 #ifdef	__cplusplus
 }
