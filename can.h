@@ -137,7 +137,7 @@ void can_setupStrictReceiveFilter(CanHeader *header);
  
 /**
  * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
- * a single mask only checking only 1st bit of the nodeID and all bits of the message type to match
+ * a single mask only checking 1st bit of the nodeID and all bits of the message type to match
  * 
  * @param header wrapper for the CanHeader - the filter will be setup to match the relevant can messages only (using just the first bit from the nodeID)
  */
@@ -146,8 +146,7 @@ void can_setupFirstBitIdReceiveFilter(CanHeader *header);
 /**
  * Attempts to send the message using TXB0 register (not using any others right now)
  * 
- * @param canID: the can ID (standard, ie 11 bits) of the message to be sent
- * @param data: data to be sent over CAN (takes all 8 bytes)
+ * @param canMessage: can message to be sent
  */
 void can_send(CanMessage *canMessage);
 
