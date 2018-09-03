@@ -103,10 +103,8 @@ void can_setupFirstBitIdReceiveFilter(CanHeader *header) {
     RXM0SIDL = 0b00001000;
 }
 
-void can_send(CanMessage *canMessage) {
-    messageStatus.statusCode = SENDING;
-    
-    // confirm nothing is in the transmit register yet (previous can message sent)    
+void can_waitForPreviousSend() {   
+    // confirm nothing is in the transmit register yet
     while (TXB0CONbits.TXREQ) {
         // check the register is not in error (previous send failed)
         if (TXB0CONbits.TXERR) {
@@ -114,6 +112,13 @@ void can_send(CanMessage *canMessage) {
             CANCONbits.ABAT = 1;
         }
     }
+}
+
+void can_send(CanMessage *canMessage) {
+    messageStatus.statusCode = SENDING;
+    
+    //there could be previous message still in the queue
+    can_waitForPreviousSend();
     
     // set up can ID appropriately
     can_headerToId(canMessage->header, &TXB0SIDH, &TXB0SIDL);
@@ -129,4 +134,9 @@ void can_send(CanMessage *canMessage) {
     
     // request transmitting the message (setting the special bit)
     TXB0CONbits.TXREQ = 1; 
+}
+
+void can_sendSynchronous(CanMessage *canMessage) {
+    can_send(canMessage);
+    can_waitForPreviousSend();
 }

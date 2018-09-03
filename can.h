@@ -57,6 +57,7 @@ typedef struct {
  typedef enum {
     CONFIG_MODE   = 0b100,
     LOOPBACK_MODE = 0b010,
+    SLEEP_MODE    = 0b001,
     NORMAL_MODE   = 0b000
 } Mode;
 
@@ -144,11 +145,18 @@ void can_setupStrictReceiveFilter(CanHeader *header);
 void can_setupFirstBitIdReceiveFilter(CanHeader *header);
 
 /**
- * Attempts to send the message using TXB0 register (not using any others right now)
+ * Attempts to send the message using TXB0 register. Does not wait for the send to finish, so leaves with the CAN module and transceiver to do their job
  * 
  * @param canMessage: can message to be sent
  */
 void can_send(CanMessage *canMessage);
+
+/**
+ * Attempts to send the message using TXB0 register. Does wait for the send to finish
+ * 
+ * @param canMessage: can message to be sent
+ */
+void can_sendSynchronous(CanMessage *canMessage);
 
 #ifdef	__cplusplus
 }
