@@ -45,13 +45,21 @@ void can_init() {
 }
 
 void can_setMode(volatile Mode mode) {
-    // always first start with aborting any pending transmission (we may be trying that before)
-    CANCONbits.ABAT = 1;
-    while (CANCONbits.ABAT); // hardware should clear this flag when all is aborted
+    if (CANSTATbits.OPMODE == mode) {
+        // nothing to do here and also in some cases the below failed trying to "change" to the same mode
+        // or not failed but was not done for some reason... Probably could be the abort trigger below...
+        return;
+    }
     
-    CANCONbits.REQOP = mode;
     // wait until we are in required mode (it may take a few cycles according to datasheet)
-    while (CANSTATbits.OPMODE != mode);    
+    // at times it also happen the ECAN module did not reply to that instruction, so rather trying in a loop
+    // otherwise simple while waiting for the mode to be properly set sometime did run infinitely
+    do {
+        CANCONbits.REQOP = mode;
+        for (int i=0; i<5; i++) {
+            NOP();
+        }
+    } while (CANSTATbits.OPMODE != mode);
 }
 
 void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed) {
