@@ -34,6 +34,8 @@ CanHeader can_idToHeader(volatile byte *high, volatile byte *low) {
 void can_init() {
     // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
     TRISBbits.TRISB3 = 1;
+    // TRIS2 = CAN BUS TX = has to be set as OUTPUT for CAN
+    TRISBbits.TRISB2 = 0;
     
     // also set the Enable Drive High bit, that should help with the stability
     CIOCONbits.ENDRHI = 1;
@@ -98,7 +100,7 @@ void can_setupStrictReceiveFilter(CanHeader *header) {
     // first 3 bits finish the canID, the 5th bit set EXIDEN to 1 - use the same value of EXIDEN as in the corresponding filter
     RXM0SIDL = 0b11101000;
     
-    // ignore buffer overflows here - we really only want to receive this 1 strict message, which is unlikely to happen often
+    // we really only want to receive this 1 strict message, which is unlikely to happen often
     // now enable the interrupts to receive CAN messages in buffer 0
     PIE5bits.RXB0IE = 1;
 }
