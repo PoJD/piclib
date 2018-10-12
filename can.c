@@ -31,12 +31,11 @@ CanHeader can_idToHeader(volatile byte *high, volatile byte *low) {
     return header; // return by copy, not reference to a local variable
 }
 
-void can_init() {
-    // TRIS3 = CAN BUS RX = has to be set as INPUT for CAN
-    TRISBbits.TRISB3 = 1;
-    // TRIS2 = CAN BUS TX = has to be set as OUTPUT for CAN
-    TRISBbits.TRISB2 = 0;
-    
+
+/**
+ * Default can init used all the time regardless the actual ports used for CANRX and CANTX
+ */
+void can_initDefault() {
     // also set the Enable Drive High bit, that should help with the stability
     CIOCONbits.ENDRHI = 1;
     
@@ -44,6 +43,25 @@ void can_init() {
     
     // when initiating again, reset this flag
     filterSetup = FALSE;
+}
+
+void can_init() {
+    // TRISB2 = CAN BUS TX = has to be set as OUTPUT for CAN
+    TRISBbits.TRISB2 = 0;
+    // TRISB3 = CAN BUS RX = has to be set as INPUT for CAN
+    TRISBbits.TRISB3 = 1;
+
+    can_initDefault();
+}
+
+void can_initRcPortsForCan() {
+    // CONFIG3H.CANMX = 0; should be set in config.h!
+    // TRISC6 = CAN BUS TX = has to be set as OUTPUT for CAN
+    TRISCbits.TRISC6 = 0;
+    // TRISC7 = CAN BUS RX = has to be set as INPUT for CAN
+    TRISCbits.TRISC7 = 1;
+
+    can_initDefault();  
 }
 
 void can_setMode(volatile Mode mode) {

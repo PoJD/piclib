@@ -109,6 +109,11 @@ CanHeader can_idToHeader(volatile byte *high, volatile byte *low);
 void can_init();
 
 /**
+ * Sets up basic can settings (ports to starts with). RC ports are to be used for CANRX and CANTX
+ */
+void can_initRcPortsForCan();
+
+/**
  * Sets operational mode of CAN chip
  * 
  * @param mode mode to set
