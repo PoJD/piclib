@@ -15,6 +15,7 @@ extern "C" {
 typedef unsigned char boolean;
 #define TRUE 1
 #define FALSE 0
+#define NULL 0
 
 typedef unsigned char byte;
 
