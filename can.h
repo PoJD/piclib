@@ -50,7 +50,7 @@ typedef struct {
       */
      
      int dataLength;
-     byte data[8]; // probably never used the whole size
+     byte data[8];
  } CanMessage;
 
 /** Modes of the controller - see datasheet */ 
