@@ -151,6 +151,7 @@ void can_setupFirstBitIdReceiveFilter(CanHeader *header);
 
 /**
  * Attempts to send the message using TXB0 register. Does not wait for the send to finish, so leaves with the CAN module and transceiver to do their job
+ * Max data payload to be sent is 8 bytes
  * 
  * @param canMessage: can message to be sent
  */
@@ -158,6 +159,7 @@ void can_send(CanMessage *canMessage);
 
 /**
  * Attempts to send the message using TXB0 register. Does wait for the send to finish
+ * Max data payload to be sent is 8 bytes
  * 
  * @param canMessage: can message to be sent
  */
