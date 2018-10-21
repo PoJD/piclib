@@ -4,7 +4,7 @@
 #include "can.h"
 
 /*
- * Public API here
+ * CAN ID and CAN DATA specific methods
  */
 
 void can_headerToId(CanHeader *header, volatile byte *high, volatile byte *low) {
@@ -31,6 +31,27 @@ CanHeader can_idToHeader(volatile byte *high, volatile byte *low) {
     return header; // return by copy, not reference to a local variable
 }
 
+/* 
+ * CAN DATA byte:
+ * 
+ * bits 8,7 = Operation
+ * bit 6 = CAN error flag
+ * bit 5,4 = firmware
+ * bit 3,2,1 = switch counter (how many times was the switch already pressed)
+ */
+
+Operation can_extractOperationFromDataByte(volatile byte data) {
+    return (data >> 6);
+}
+
+byte can_combineCanDataByte(Operation operation, volatile boolean canError, byte firmwareVersion, volatile byte switchCounter) {
+    return ((operation&0b11) << 6) + ((canError&0b1) << 5) + ((firmwareVersion&0b11) << 3 ) + (switchCounter&0b111);
+}
+
+
+/**
+ * Generic public CAN API
+ */
 
 /**
  * Default can init used all the time regardless the actual ports used for CANRX and CANTX

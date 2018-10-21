@@ -52,6 +52,16 @@ typedef struct {
      int dataLength;
      byte data[8];
  } CanMessage;
+ 
+/**
+ * Operations sent over CAN bus for a given node ID. Max 2 bits! Used to combine 1st byte in normal and heartbeat messages
+ */
+typedef enum {
+    TOGGLE = 0b00,
+    ON     = 0b01,
+    OFF    = 0b10,
+    GET    = 0b11  
+} Operation;
 
 /** Modes of the controller - see datasheet */ 
  typedef enum {
@@ -102,6 +112,25 @@ void can_headerToId(CanHeader *header, volatile byte *high, volatile byte *low);
  * @return header translated can header
  */
 CanHeader can_idToHeader(volatile byte *high, volatile byte *low);
+
+/**
+ * Extract operation from the in passed data byte received over CAN line
+ * 
+ * @param data data byte received over CAN to parse operation from
+ * @return operation requested by this CAN message
+ */
+Operation can_extractOperationFromDataByte(volatile byte data);
+
+/**
+ * Combine a simple data byte from the in passed arguments
+ * 
+ * @param operation operation to trigger
+ * @param canError flag whether can error was detected on the bus by the sender so far
+ * @param firmwareVersion firmware version of the sender
+ * @param switchCounter switch counter of the sender
+ * @return combined data byte from the arguments to send over CAN
+ */
+byte can_combineCanDataByte(Operation operation, volatile boolean canError, byte firmwareVersion, volatile byte switchCounter);
 
 /**
  * Sets up basic can settings (ports to starts with)
