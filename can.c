@@ -62,8 +62,8 @@ void can_initDefault() {
     
     messageStatus.statusCode = NOTHING_SENT;
     
-    // when initiating again, reset this flag
-    filterSetup = FALSE;
+    // when initiating again, reset this counter
+    filterCount = 0;
 }
 
 void can_init() {
@@ -121,18 +121,26 @@ void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed) {
 
 void can_setupStrictReceiveFilter(CanHeader *header) {
     // setup just 1 acceptance filter to only accept CAN message for the in passed header information
-    // so either set first or second acceptance filter (based on whether this method was already called or not)
+    // so setup first or second or third acceptance filter (based on whether this method was already called or not and how many times so far)
     // in addition to setting it up, also enable it through the RXFCON0bits bits
-    if (!filterSetup) {
-        can_headerToId(header, &RXF0SIDH, &RXF0SIDL);
-        RXFCON0bits.RXF0EN = 1;
-    } else {
-        can_headerToId(header, &RXF1SIDH, &RXF1SIDL);
-        RXFCON0bits.RXF1EN = 1;
+    switch (filterCount) {
+        case 0: 
+            can_headerToId(header, &RXF0SIDH, &RXF0SIDL);
+            RXFCON0bits.RXF0EN = 1;
+            break;
+        case 1:
+            can_headerToId(header, &RXF1SIDH, &RXF1SIDL);
+            RXFCON0bits.RXF1EN = 1;
+            break;
+        case 2: 
+            can_headerToId(header, &RXF2SIDH, &RXF2SIDL);
+            RXFCON0bits.RXF2EN = 1;
+            break;
+        // setup more should we ever need it
     }
     
-    // remember to use the second filter next time
-    filterSetup = TRUE;
+    // increase the counter so that we know how many filters we already setup
+    filterCount++;
     
     // now setup the strict mask -- all high 11 bits are the canID, rest is EXIDEN bits and others unused in legacy mode
     RXM0SIDH = 0b11111111;

@@ -1,5 +1,5 @@
 /* 
- * Wrapper for data storing
+ * Wrapper for data storing. Always uses 2 bytes for storing or loading any data
  * 
  * File:   dao.h
  * Author: pojd
@@ -16,59 +16,39 @@ extern "C" {
 
 #include "utils.h"
 
-// not initialized EEPROM has all 1s by default, so invalid is the int set to 0x3FFF (2^14) since we only use 14bits for the data itself
-#define INVALID_VALUE MAX_14_BITS
-    
-/**
- * Core type of data.
- */
-typedef enum {
-    /** id of the node. Note that this way (by passing a config message with NODE_ID) this chip node_id is changed.
-         So the same message would not be processed by this node anymore since it won't listen to that traffic anymore */
-    NODE_ID = 0,
-    /** should the switch be suppressed? (i.e. no CAN message should be sent when this is true?) */
-    SUPPRESS_SWITCH = 1,
-    /** hearbeat timeout in seconds */
-    HEARTBEAT_TIMEOUT = 2,
-    /** floor of this node - only used in CanRelay project */
-    FLOOR = 3
-} DataType;
+// not initialized EEPROM has all 1s by default, so invalid is the int set to 0xFFFF (2^16) since we always use 2 bytes of data for value
+#define INVALID_VALUE MAX_16_BITS
 
 /**
  * Core Data Item structure - wraps some data item (i.e. type and value)
  */
 typedef struct {
-    DataType dataType; // 2 bits to hold data type
-    unsigned int value; // up to 14 bits to hold the data itself (max 16384)
+    unsigned int address; // address in EEPROM
+    unsigned int value; // up to 16 bits to hold the data itself
 } DataItem;
 
 /**
  * Detects whether the in-passed data item is valid or not
+ * 
  * @param dataItem data item to check
  * @return true if valid, false otherwise
  */
-boolean dao_isValid (volatile DataItem *dataItem);
+boolean dao_isValid (DataItem *dataItem);
 
 /**
- * Save data into the storage.
- * @param data data to store - 16 bits of data received and to be interpreted as Data item structure
- * @return the parsed Data instance representing the data
- */
-DataItem dao_saveData (volatile unsigned int data);
-
-/**
- * Save data item into the storage.
+ * Save data item into the storage
+ * 
  * @param dataItem data item to store
  */
-void dao_saveDataItem (volatile DataItem *dataItem);
+void dao_saveDataItem (DataItem *dataItem);
 
 /**
- * Loads data item from storage for the given dataType
+ * Loads data item from storage for the given address
  * 
- * @param dataType dataType to retrieve data item for
+ * @param address address to retrieve data item from
  * @return new data item
  */
-DataItem dao_loadDataItem(volatile DataType dataType);
+DataItem dao_loadDataItem(unsigned int address);
 
 #ifdef	__cplusplus
 }

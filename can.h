@@ -24,7 +24,7 @@ typedef enum {
     NORMAL        = 0, // normal message is a message sent by the node to reveal some action performed
     HEARTBEAT     = 1, // hearbeat message is also sent by this node, but only triggered by a timer
     CONFIG        = 2, // config would typically be sent by some master node in the network to setup this node (so this node would receive this message instead)
-    COMPLEX       = 3, // complex message is allowing more complex commands to be transmitted (sort of extension of NORMAL))
+    COMPLEX       = 3, // complex message is allowing more complex commands to be transmitted (sort of extension of NORMAL)
     COMPLEX_REPLY = 4  // reply to a complex message
 } MessageType;
     
@@ -157,10 +157,11 @@ void can_setMode(volatile Mode mode);
  */
 void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed);
 
-/** flag used to indicate whether a filter has already been setup. If so, the second filter would be used
- * (just 2 filters are supported at the moment, calling the below methods multiple times will result in overwriting
- * the second acceptance filter). Either will result in 1st receive buffer receiving the message */
-boolean filterSetup = FALSE;
+/** 
+ * counter used to indicate if and how many filters has already been setup. If for example one already was, the second filter would be used
+ * Max supported is 3 at the moment.
+ */
+byte filterCount = 0;
 
 /**
  * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
