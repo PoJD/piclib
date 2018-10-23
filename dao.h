@@ -20,11 +20,13 @@ extern "C" {
 #define INVALID_VALUE MAX_16_BITS
 
 /**
- * Core Data Item structure - wraps some data item (i.e. type and value)
+ * Core Data Item structure used as an API for the DAO (to store or retrieve data from underlying EEPROM)
  */
 typedef struct {
-    unsigned int address; // address in EEPROM
-    unsigned int value; // up to 16 bits to hold the data itself
+    // bucket is used to pick address in EEPROM. Real address is calculated as "bucket << 1" as we are using 2 bytes for each bucket
+    // max bucket should be 2^9 as EEPROM has 2^10 entries
+    unsigned int bucket;
+    unsigned int value; // 2 bytes to hold the data itself
 } DataItem;
 
 /**
@@ -43,12 +45,12 @@ boolean dao_isValid (DataItem *dataItem);
 void dao_saveDataItem (DataItem *dataItem);
 
 /**
- * Loads data item from storage for the given address
+ * Loads data item from storage for the given bucket
  * 
- * @param address address to retrieve data item from
+ * @param bucket bucket number to retrieve data item from
  * @return new data item
  */
-DataItem dao_loadDataItem(unsigned int address);
+DataItem dao_loadDataItem(unsigned int bucket);
 
 #ifdef	__cplusplus
 }

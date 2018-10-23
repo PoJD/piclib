@@ -10,9 +10,12 @@
  * 
  * @param address
  */
-void dao_setupEeprom(unsigned int address) {
+void dao_setupEeprom(unsigned int bucket) {
     // write to EEPROM, write only, rest are flags cleared by us this way
     EECON1 = 0;
+    
+    // translate from bucket to address, i.e. multiply by 2 as each bucket occupies 2 bytes of data
+    unsigned int address = bucket << 1;
     
     // we have 10bits of data (1024 bytes)
     EEADRH = (address >> 8) & 0b11;
@@ -55,7 +58,7 @@ void dao_saveDataItem (DataItem *dataItem) {
     // always disable interrupts during EEPROM write
     di();
     
-    dao_setupEeprom(dataItem->address);
+    dao_setupEeprom(dataItem->bucket);
 
     // now enable write to EEPROM
     EECON1bits.WREN = 1;
@@ -76,14 +79,14 @@ void dao_saveDataItem (DataItem *dataItem) {
     ei();
 }
 
-DataItem dao_loadDataItem(unsigned int address) {
+DataItem dao_loadDataItem(unsigned int bucket) {
     DataItem result;
-    result.address = address;
+    result.bucket = bucket;
     
     // always disable interrupts during EEPROM read
     di();
     
-    dao_setupEeprom(address);
+    dao_setupEeprom(bucket);
     
     // now read high 8 bits of data
     result.value = dao_readByte() << 8;
