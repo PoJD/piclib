@@ -5,21 +5,26 @@
  * Internal methods
  */
 
+
+void dao_setupEepromAddress(unsigned int address) {
+    // we have 10bits of data (1024 bytes)
+    EEADRH = (address >> 8) & 0b11;
+    EEADR = address & MAX_8_BITS;        
+}
+
 /**
- * Sets up eeprom read/write. It also sets the address to write/read the data to/from in EEPROM based on the address
+ * Sets up eeprom read/write. It also sets the address to write/read the data to/from in EEPROM based on the bucket
  * 
  * @param address
  */
-void dao_setupEeprom(unsigned int bucket) {
+unsigned int dao_setupEeprom(unsigned int bucket) {
     // write to EEPROM, write only, rest are flags cleared by us this way
     EECON1 = 0;
     
     // translate from bucket to address, i.e. multiply by 2 as each bucket occupies 2 bytes of data
     unsigned int address = bucket << 1;
-    
-    // we have 10bits of data (1024 bytes)
-    EEADRH = (address >> 8) & 0b11;
-    EEADR = address & MAX_8_BITS;        
+    dao_setupEepromAddress(address);
+    return address;
 }
 
 /**
@@ -58,7 +63,7 @@ void dao_saveDataItem (DataItem *dataItem) {
     // always disable interrupts during EEPROM write
     di();
     
-    dao_setupEeprom(dataItem->bucket);
+    unsigned int address = dao_setupEeprom(dataItem->bucket);
 
     // now enable write to EEPROM
     EECON1bits.WREN = 1;
@@ -68,7 +73,7 @@ void dao_saveDataItem (DataItem *dataItem) {
     dao_writeByte();
     
     // now lower 8 bits of the value
-    EEADR ++;
+    dao_setupEepromAddress(address+1);
     EEDATA = MAX_8_BITS & dataItem->value;
     dao_writeByte();
 
@@ -86,13 +91,13 @@ DataItem dao_loadDataItem(unsigned int bucket) {
     // always disable interrupts during EEPROM read
     di();
     
-    dao_setupEeprom(bucket);
+    unsigned int address = dao_setupEeprom(bucket);
     
     // now read high 8 bits of data
     result.value = dao_readByte() << 8;
     
     // now move the address and initiate another read to get the 8 lower bits
-    EEADR ++;
+    dao_setupEepromAddress(address+1);
     result.value += dao_readByte();
     
     // now enable interrupts again

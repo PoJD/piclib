@@ -48,7 +48,6 @@ byte can_combineCanDataByte(Operation operation, volatile boolean canError, byte
     return ((operation&0b11) << 6) + ((canError&0b1) << 5) + ((firmwareVersion&0b11) << 3 ) + (switchCounter&0b111);
 }
 
-
 /**
  * Generic public CAN API
  */
@@ -119,7 +118,7 @@ void can_setupBaudRate(volatile int baudRate, volatile int cpuSpeed) {
     BRGCON3 = 0b00000010;
 }
 
-void can_setupStrictReceiveFilter(CanHeader *header) {
+void can_setupReceiveFilter(CanHeader *header, byte maskHigh, byte maskLow) {
     // setup just 1 acceptance filter to only accept CAN message for the in passed header information
     // so setup first or second or third acceptance filter (based on whether this method was already called or not and how many times so far)
     // in addition to setting it up, also enable it through the RXFCON0bits bits
@@ -132,32 +131,39 @@ void can_setupStrictReceiveFilter(CanHeader *header) {
             can_headerToId(header, &RXF1SIDH, &RXF1SIDL);
             RXFCON0bits.RXF1EN = 1;
             break;
-        case 2: 
+        case 2:
+            // we are in Mode 0 and according to the data sheet, filters 2 and higher are associated with RXB1 buffer unlike filters 0 and 1
             can_headerToId(header, &RXF2SIDH, &RXF2SIDL);
             RXFCON0bits.RXF2EN = 1;
             break;
         // setup more should we ever need it
     }
     
+    // for filters 0 and 1, use RXM0 mask and RXB0 buffer, for higher use RXM1 mask and RXB1 filter
+    if (filterCount<2) {
+        // now setup the strict mask -- all high 11 bits are the canID, rest is EXIDEN bits and others unused in legacy mode
+        RXM0SIDH = maskHigh;
+        // first 3 bits finish the canID, the 5th bit sets EXIDEN to 1 - use the same value of EXIDEN as in the corresponding filter
+        RXM0SIDL = maskLow;
+        // now enable the interrupts to receive CAN messages in buffer 0
+        PIE5bits.RXB0IE = 1;
+    } else {
+        RXM1SIDH = maskHigh;
+        RXM1SIDL = maskLow;
+        PIE5bits.RXB1IE = 1;    
+    }
+
     // increase the counter so that we know how many filters we already setup
     filterCount++;
-    
-    // now setup the strict mask -- all high 11 bits are the canID, rest is EXIDEN bits and others unused in legacy mode
-    RXM0SIDH = 0b11111111;
-    // first 3 bits finish the canID, the 5th bit set EXIDEN to 1 - use the same value of EXIDEN as in the corresponding filter
-    RXM0SIDL = 0b11101000;
-    
-    // we really only want to receive this 1 strict message, which is unlikely to happen often
-    // now enable the interrupts to receive CAN messages in buffer 0
-    PIE5bits.RXB0IE = 1;
+}
+
+void can_setupStrictReceiveFilter(CanHeader *header) {
+    can_setupReceiveFilter (header, 0b11111111, 0b11101000);
 }
 
 void can_setupFirstBitIdReceiveFilter(CanHeader *header) {
-    can_setupStrictReceiveFilter(header);
-    
     // the only difference is the mask - only mask first 4 bits of the canID (3 for message type and 1 for the first bit from nodeID)
-    RXM0SIDH = 0b11110000;
-    RXM0SIDL = 0b00001000;
+    can_setupReceiveFilter (header, 0b11110000, 0b00001000);
 }
 
 void can_waitForPreviousSend() {   

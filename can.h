@@ -167,6 +167,9 @@ byte filterCount = 0;
  * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
  * a single mask only checking all bits to be equal.
  * 
+ * For first 2 calls of the filter methods, buffer RXB0 would get loaded up by CAN messages, for filters 3 and above, RXB1 instead, so user software needs to check respective 
+ * buffers and flags accordingly
+ * 
  * @param header wrapper for the CanHeader - the filter will be setup to match the relevant can messages only
  */
 void can_setupStrictReceiveFilter(CanHeader *header);
@@ -174,6 +177,9 @@ void can_setupStrictReceiveFilter(CanHeader *header);
 /**
  * Setup receive filter based on the in passed CanHeader - to receive only can messages for that header. This method will setup
  * a single mask only checking 1st bit of the nodeID and all bits of the message type to match
+ * 
+ * For first 2 calls of the filter methods, buffer RXB0 would get loaded up by CAN messages, for filters 3 and above, RXB1 instead, so user software needs to check respective 
+ * buffers and flags accordingly
  * 
  * @param header wrapper for the CanHeader - the filter will be setup to match the relevant can messages only (using just the first bit from the nodeID)
  */
