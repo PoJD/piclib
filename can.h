@@ -93,7 +93,6 @@ typedef struct {
  *  but the application code is required to keep it updated after a message is sent (both timestamp and status) */
 MessageStatus messageStatus;
 
-
 /**
  * Use the can header to setup the register for can ID (only low 11 bits should be set)
  * This would set the high and low registers as per the arguments
