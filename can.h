@@ -1,6 +1,6 @@
 /* 
  * Main CAN interface. Provides methods for initializing the CAN protocol stack as well as sending CAN traffic over.
- * Implemented from PIC18F2XKXX datasheet, so could work for other chips too (assuming xc.h is included in your main file prior to this one)
+ * Implemented from PIC18FXXKXX datasheet, so could work for other chips too (assuming xc.h is included in your main file prior to this one)
  * 
  * File:   can.h
  * Author: pojd
@@ -21,11 +21,14 @@ extern "C" {
  * Type of CanMessage
  */
 typedef enum {
-    NORMAL        = 0, // normal message is a message sent by the node to reveal some action performed
-    HEARTBEAT     = 1, // hearbeat message is also sent by this node, but only triggered by a timer
-    CONFIG        = 2, // config would typically be sent by some master node in the network to setup this node (so this node would receive this message instead)
-    COMPLEX       = 3, // complex message is allowing more complex commands to be transmitted (sort of extension of NORMAL)
-    COMPLEX_REPLY = 4  // reply to a complex message
+    NORMAL         = 0, // normal message is a message sent by the node to reveal some action performed
+    HEARTBEAT      = 1, // hearbeat message is also sent by this node, but only triggered by a timer
+    CONFIG         = 2, // config would typically be sent by some master node in the network to setup this node (so this node would receive this message instead)
+    COMPLEX        = 3, // complex message is allowing more complex commands to be transmitted (sort of extension of NORMAL)
+    COMPLEX_REPLY  = 4, // reply to a complex message
+    MAPPINGS       = 5, // request to get CanRelay mappings at runtime
+    MAPPINGS_REPLY = 6  // reply to a mappings request
+       
 } MessageType;
     
 /**
@@ -35,7 +38,7 @@ typedef struct {
      /** the message ID - 8 bits only in this application, other 3 as part of the final can ID are used to encode other information  */
      byte nodeID;
           
-     /** type of the message to be sent/received  */
+     /** type of the message to be sent/received. 3 bits  */
      MessageType messageType;
 } CanHeader;
 

@@ -11,7 +11,7 @@ void can_headerToId(CanHeader *header, volatile byte *high, volatile byte *low) 
     // high byte is set to equal to message type - should be 3 bits only, so highest 5 bits will be 0 anyway
     // low byte = the node ID directly
     // high bits are set to message type on purpose to ease filtering - make sure the highest bits are filtered easily
-    int canID = (header->messageType << 8) + header->nodeID;
+    unsigned int canID = (header->messageType << 8) + header->nodeID;
 
     *high = (canID >> 3) & MAX_8_BITS; // take highest 8 bits as a byte
     // take 3 bits only and set as high bits inside low byte register 
@@ -20,12 +20,12 @@ void can_headerToId(CanHeader *header, volatile byte *high, volatile byte *low) 
 }
 
 CanHeader can_idToHeader(volatile byte *high, volatile byte *low) {
-    // shift hight byte to get the upper 8 bits, add the low byte and then shift it all to right
+    // shift high byte to get the upper 8 bits, add the low byte and then shift it all to right
     // since we only have 11 bits of CAN ID in there (just highest 3 bits of low ID are the lowest 3 bits)
-    int canID = ( (*high << 8) + *low ) >> 5;
+    unsigned int canID = ( (unsigned int)(*high << 8) + (unsigned int)*low ) >> 5;
     
     CanHeader header;
-    header.messageType = canID >> 8; //high 8 bits is message type (should contain just 3 bits really)
+    header.messageType = canID >> 8; // high 8 bits is message type (should contain just 3 bits really)
     header.nodeID = canID & MAX_8_BITS; // low 8 bits is the node ID
     
     return header; // return by copy, not reference to a local variable
@@ -131,10 +131,14 @@ void can_setupReceiveFilter(CanHeader *header, byte maskHigh, byte maskLow) {
             can_headerToId(header, &RXF1SIDH, &RXF1SIDL);
             RXFCON0bits.RXF1EN = 1;
             break;
+        // we are in Mode 0 and according to the data sheet, filters 2 and higher are associated with RXB1 buffer unlike filters 0 and 1
         case 2:
-            // we are in Mode 0 and according to the data sheet, filters 2 and higher are associated with RXB1 buffer unlike filters 0 and 1
             can_headerToId(header, &RXF2SIDH, &RXF2SIDL);
             RXFCON0bits.RXF2EN = 1;
+            break;
+        case 3:
+            can_headerToId(header, &RXF3SIDH, &RXF3SIDL);
+            RXFCON0bits.RXF3EN = 1;
             break;
         // setup more should we ever need it
     }
